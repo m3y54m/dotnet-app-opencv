@@ -1,4 +1,4 @@
-# .NET 5.0 Desktop App for Linux
+# .NET 5.0 Desktop App for Linux + OpenCV
 
 A getting started project for .NET 5.0 with C# in Linux + OpenCV C++
 
