@@ -19,4 +19,4 @@ Now generate the libraries and executables in `build` directory:
 cmake --build build
 ```
 
-For more information got to https://github.com/m3y54m/library-with-cmake
+For more information go to https://github.com/m3y54m/library-with-cmake

@@ -6,5 +6,5 @@
 
 extern "C"
 {
-    void SobelOpenCV(uchar *imageData, int height, int width);
+    void processImage(int width, int height, int depth, int channels, int step, uchar *imagePointer);
 }
