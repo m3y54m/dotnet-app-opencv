@@ -1,6 +1,6 @@
 # .NET 5.0 Desktop App for Linux
 
-A getting started project for .NET 5.0 with C# in Linux
+A getting started project for .NET 5.0 with C# in Linux + OpenCV C++
 
 https://docs.microsoft.com/en-us/dotnet/core/tutorials/with-visual-studio-code
 
