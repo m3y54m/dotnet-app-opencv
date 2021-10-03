@@ -82,13 +82,13 @@ namespace dotnet_app
                     {
                         byte byteFromSerialPort = (byte)mySerialPort.ReadByte();
                         // All application-specific processing of serial port bytes is done here
-                        prossesSerialPortByte(byteFromSerialPort);
+                        processSerialPortByte(byteFromSerialPort);
                     }
                 }
             }
         }
 
-        private static void prossesSerialPortByte(byte inputByte)
+        private static void processSerialPortByte(byte inputByte)
         {
             // Print each received char
             Console.Write(Convert.ToChar(inputByte));
