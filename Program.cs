@@ -23,6 +23,7 @@ namespace dotnet_app
 
         // Serial Port Data Processing
         static Queue<byte> queueSerialPortBytes = new Queue<byte>();
+        private static object lockQueue = new object();
         static AutoResetEvent someSerialPortDataIsReady = new AutoResetEvent(false);
         static Thread serialPortThread;
 
@@ -47,11 +48,11 @@ namespace dotnet_app
             // Serial port communication
             mySerialPort = new SerialPort();
             mySerialPort.BaudRate = 9600;
-            mySerialPort.DataReceived += new SerialDataReceivedEventHandler(serialPortDataReceivedHandler);
+            mySerialPort.DataReceived += new SerialDataReceivedEventHandler(addSerialPortDataToQueue);
             bool isSerialPortAvailable = openMySerialPort(defaultSerialPortName);
 
             // Create a new thread for processing serial port incoming data byte by byte
-            serialPortThread = new Thread(serialPortThreadHandler);
+            serialPortThread = new Thread(getSerialPortDataFromQueue);
 
             if (isSerialPortAvailable)
             {
@@ -78,7 +79,7 @@ namespace dotnet_app
             }
         }
 
-        private static void serialPortDataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
+        private static void addSerialPortDataToQueue(object sender, SerialDataReceivedEventArgs e)
         {
             try
             {
@@ -89,7 +90,7 @@ namespace dotnet_app
                     mySerialPort.Read(chunk, 0, chunk.Length);
 
                     // Add the chunk of bytes to queue
-                    lock (queueSerialPortBytes)
+                    lock (lockQueue)
                     {
                         for (int i = 0; i < chunk.Length; i++)
                             queueSerialPortBytes.Enqueue(chunk[i]);
@@ -105,13 +106,13 @@ namespace dotnet_app
         }
 
         //This thread processes the stored chunks doing the less locking possible
-        private static void serialPortThreadHandler(object state)
+        private static void getSerialPortDataFromQueue(object state)
         {
             while (!quitCommand)
             {
                 someSerialPortDataIsReady.WaitOne();
 
-                lock (queueSerialPortBytes)
+                lock (lockQueue)
                 {
                     while (queueSerialPortBytes.Count > 0)  // process each single byte
                     {
