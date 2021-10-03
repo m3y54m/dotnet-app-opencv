@@ -38,7 +38,6 @@ void processImage(int width, int height, int depth, int channels, int step, ucha
     cvtColor(tmp, tmp, COLOR_GRAY2BGR);
     // ------------------------------------------------------
 
-
     // Overwrite data of 'tmp' Mat to the address of 'imagePointer'
     memcpy(imagePointer, tmp.data, width * height * channels * sizeof(uchar));
 }
