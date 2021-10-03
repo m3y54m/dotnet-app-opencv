@@ -1,6 +1,6 @@
 # .NET 5.0 Desktop App for Linux + OpenCV
 
-A getting started project for .NET 5.0 with C# in Linux + OpenCV C++
+A getting started project for .NET 5.0 with C# in Linux + Calling an OpenCV-based C++ function in a C# program.
 
 https://docs.microsoft.com/en-us/dotnet/core/tutorials/with-visual-studio-code
 
