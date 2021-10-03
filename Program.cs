@@ -7,8 +7,6 @@ using System.Drawing;
 using System.IO.Ports;
 // Thread.Sleep and Multi-threading
 using System.Threading;
-// Queues
-using System.Collections.Generic;
 
 namespace dotnet_app
 {
@@ -20,15 +18,10 @@ namespace dotnet_app
         // Serial Port
         static SerialPort mySerialPort;
         const string defaultSerialPortName = "/dev/ttyACM0";
-
-        // Serial Port Data Processing
-        static Queue<byte> queueSerialPortBytes = new Queue<byte>();
-        private static object lockQueue = new object();
-        static AutoResetEvent someSerialPortDataIsReady = new AutoResetEvent(false);
+        const int defaultSerialPortBaud = 921600;
         static Thread serialPortThread;
 
         static bool quitCommand = false;
-
 
         static void Main(string[] args)
         {
@@ -47,12 +40,10 @@ namespace dotnet_app
 
             // Serial port communication
             mySerialPort = new SerialPort();
-            mySerialPort.BaudRate = 9600;
-            mySerialPort.DataReceived += new SerialDataReceivedEventHandler(addSerialPortDataToQueue);
-            bool isSerialPortAvailable = openMySerialPort(defaultSerialPortName);
+            bool isSerialPortAvailable = openMySerialPort(defaultSerialPortName, defaultSerialPortBaud);
 
             // Create a new thread for processing serial port incoming data byte by byte
-            serialPortThread = new Thread(getSerialPortDataFromQueue);
+            serialPortThread = new Thread(serialPortThreadHandler);
 
             if (isSerialPortAvailable)
             {
@@ -79,46 +70,17 @@ namespace dotnet_app
             }
         }
 
-        private static void addSerialPortDataToQueue(object sender, SerialDataReceivedEventArgs e)
-        {
-            try
-            {
-                if (mySerialPort.BytesToRead > 0)
-                {
-                    // Get a chunk of bytes available in serial port buffer
-                    byte[] chunk = new byte[mySerialPort.BytesToRead];
-                    mySerialPort.Read(chunk, 0, chunk.Length);
-
-                    // Add the chunk of bytes to queue
-                    lock (lockQueue)
-                    {
-                        for (int i = 0; i < chunk.Length; i++)
-                            queueSerialPortBytes.Enqueue(chunk[i]);
-                    }
-
-                    someSerialPortDataIsReady.Set();
-                }
-            }
-            catch
-            {
-                //...
-            }
-        }
-
         //This thread processes the stored chunks doing the less locking possible
-        private static void getSerialPortDataFromQueue(object state)
+        private static void serialPortThreadHandler(object state)
         {
             while (!quitCommand)
             {
-                someSerialPortDataIsReady.WaitOne();
-
-                lock (lockQueue)
+                int serialPortBytesToRead = mySerialPort.BytesToRead;
+                if (serialPortBytesToRead > 0)
                 {
-                    while (queueSerialPortBytes.Count > 0)  // process each single byte
+                    for (int counter = 0; counter < serialPortBytesToRead; counter++)
                     {
-                        // get (pop) one byte from queue of serial port received bytes
-                        byte byteFromSerialPort = queueSerialPortBytes.Dequeue();
-
+                        byte byteFromSerialPort = (byte)mySerialPort.ReadByte();
                         // All application-specific processing of serial port bytes is done here
                         prossesSerialPortByte(byteFromSerialPort);
                     }
@@ -132,7 +94,7 @@ namespace dotnet_app
             Console.Write(Convert.ToChar(inputByte));
         }
 
-        private static bool openMySerialPort(string serialPortName)
+        private static bool openMySerialPort(string serialPortName, int serialPortBaud)
         {
             string[] portNames = SerialPort.GetPortNames();
 
@@ -149,6 +111,8 @@ namespace dotnet_app
                     {
                         // Found the serial port name
                         mySerialPort.PortName = serialPortName;
+                        mySerialPort.BaudRate = serialPortBaud;
+
                         if (!mySerialPort.IsOpen)
                         {
                             mySerialPort.Open();

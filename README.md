@@ -5,6 +5,7 @@ An embedded developer friendly project for .NET 5.0 with C# in Linux ,capable of
 - Calling an OpenCV-based C++ function in a C# program
 - Communication with a serial port in C#
 - Multi-threading for processing serial port incoming bytes
+
 ## Useful Commands
 
 ### Create the app
