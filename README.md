@@ -48,4 +48,7 @@ cmake --build sobel_opencv_cpp/build
 dotnet run
 ```
 
+### Testing serial port
+
+In order to test the functionality of serial port data processing of this C# program you can use upload the Arduino program available in `arduino_serial_port` directory to an Arduino board.
 
