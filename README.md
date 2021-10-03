@@ -34,6 +34,12 @@ cmake --build sobel_opencv_cpp/build
     ```console
     dotnet add package System.IO.Ports --version 5.0.1
     ```
+
+-   Add support for Threads
+
+    ```console
+    dotnet add package System.Threading --version 4.3.0
+    ```
 ### Run the app
 
 ```console

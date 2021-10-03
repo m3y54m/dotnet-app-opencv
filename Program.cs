@@ -5,6 +5,10 @@ using System.Runtime.InteropServices;
 using System.Drawing;
 // Communicate with serial port
 using System.IO.Ports;
+// Thread.Sleep and Multi-threading
+using System.Threading;
+// Queues
+using System.Collections.Generic;
 
 namespace dotnet_app
 {
@@ -14,9 +18,16 @@ namespace dotnet_app
         [DllImport("./sobel_opencv_cpp/build/libsobel.so")] static extern unsafe void processImage(int width, int height, int depth, int channels, int step, byte* imagePointer);
 
         // Serial Port
-        static bool isSerialPortAvailable;
         static SerialPort mySerialPort;
-        static string defaultSerialPortName = "/dev/ttyACM0";
+        const string defaultSerialPortName = "/dev/ttyACM0";
+
+        // Serial Port Data Processing
+        static Queue<byte> queueSerialPortBytes = new Queue<byte>();
+        static AutoResetEvent someSerialPortDataIsReady = new AutoResetEvent(false);
+        static Thread serialPortThread;
+
+        static bool quitCommand = false;
+
 
         static void Main(string[] args)
         {
@@ -33,26 +44,91 @@ namespace dotnet_app
             processImageByCsharp(bmpBackup);
             bmpBackup.Save("tmp/output-csharp.jpg");
 
-            // Open the serial port
+            // Serial port communication
             mySerialPort = new SerialPort();
             mySerialPort.BaudRate = 9600;
-            isSerialPortAvailable = openMySerialPort(defaultSerialPortName);
+            mySerialPort.DataReceived += new SerialDataReceivedEventHandler(serialPortDataReceivedHandler);
+            bool isSerialPortAvailable = openMySerialPort(defaultSerialPortName);
+
+            // Create a new thread for processing serial port incoming data byte by byte
+            serialPortThread = new Thread(serialPortThreadHandler);
 
             if (isSerialPortAvailable)
             {
-                while (true)
+                serialPortThread.Start();
+
+                while (!quitCommand)
                 {
-                    if (mySerialPort.BytesToRead > 0)
+                    // This is used to check the `q` (quit command) in main thread
+                    char command = Console.ReadKey().KeyChar;
+
+                    if (command.Equals('q'))
                     {
-                        string line = mySerialPort.ReadLine();
-                        Console.WriteLine(line);
+                        quitCommand = true;
                     }
                 }
+
+                serialPortThread.Join();
+                mySerialPort.Close();
+                Console.WriteLine("\rQuit signal is received.");
             }
             else
             {
                 Console.WriteLine("Unable to open the serial port.");
             }
+        }
+
+        private static void serialPortDataReceivedHandler(object sender, SerialDataReceivedEventArgs e)
+        {
+            try
+            {
+                if (mySerialPort.BytesToRead > 0)
+                {
+                    // Get a chunk of bytes available in serial port buffer
+                    byte[] chunk = new byte[mySerialPort.BytesToRead];
+                    mySerialPort.Read(chunk, 0, chunk.Length);
+
+                    // Add the chunk of bytes to queue
+                    lock (queueSerialPortBytes)
+                    {
+                        for (int i = 0; i < chunk.Length; i++)
+                            queueSerialPortBytes.Enqueue(chunk[i]);
+                    }
+
+                    someSerialPortDataIsReady.Set();
+                }
+            }
+            catch
+            {
+                //...
+            }
+        }
+
+        //This thread processes the stored chunks doing the less locking possible
+        private static void serialPortThreadHandler(object state)
+        {
+            while (!quitCommand)
+            {
+                someSerialPortDataIsReady.WaitOne();
+
+                lock (queueSerialPortBytes)
+                {
+                    while (queueSerialPortBytes.Count > 0)  // process each single byte
+                    {
+                        // get (pop) one byte from queue of serial port received bytes
+                        byte byteFromSerialPort = queueSerialPortBytes.Dequeue();
+
+                        // All application-specific processing of serial port bytes is done here
+                        prossesSerialPortByte(byteFromSerialPort);
+                    }
+                }
+            }
+        }
+
+        private static void prossesSerialPortByte(byte inputByte)
+        {
+            // Print each received char
+            Console.Write(Convert.ToChar(inputByte));
         }
 
         private static bool openMySerialPort(string serialPortName)
