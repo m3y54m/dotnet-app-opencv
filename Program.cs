@@ -13,6 +13,11 @@ namespace dotnet_app
         // Load processImage function from `libsobel.so` shared (dynamic) library
         [DllImport("./sobel_opencv_cpp/build/libsobel.so")] static extern unsafe void processImage(int width, int height, int depth, int channels, int step, byte* imagePointer);
 
+        // Serial Port
+        static bool isSerialPortAvailable;
+        static SerialPort mySerialPort;
+        static string defaultSerialPortName = "/dev/ttyACM0";
+
         static void Main(string[] args)
         {
             // Open a sample image file for imgae processing
@@ -28,25 +33,61 @@ namespace dotnet_app
             processImageByCsharp(bmpBackup);
             bmpBackup.Save("tmp/output-csharp.jpg");
 
-            // Print list of all available serial ports
-            availableSerialPorts();
+            // Open the serial port
+            mySerialPort = new SerialPort();
+            mySerialPort.BaudRate = 9600;
+            isSerialPortAvailable = openMySerialPort(defaultSerialPortName);
+
+            if (isSerialPortAvailable)
+            {
+                while (true)
+                {
+                    if (mySerialPort.BytesToRead > 0)
+                    {
+                        string line = mySerialPort.ReadLine();
+                        Console.WriteLine(line);
+                    }
+                }
+            }
+            else
+            {
+                Console.WriteLine("Unable to open the serial port.");
+            }
         }
 
-        private static Boolean availableSerialPorts()
+        private static bool openMySerialPort(string serialPortName)
         {
-            string[] ports = SerialPort.GetPortNames();
+            string[] portNames = SerialPort.GetPortNames();
 
-            if (ports.GetLength(0) == 0)
+            if (portNames.GetLength(0) == 0)
             {
+                // There is no serial port available
                 return false;
             }
             else
             {
-                foreach (var port in ports)
+                foreach (string portName in portNames)
                 {
-                    Console.WriteLine(port);
+                    if (portName == serialPortName)
+                    {
+                        // Found the serial port name
+                        mySerialPort.PortName = serialPortName;
+                        if (!mySerialPort.IsOpen)
+                        {
+                            mySerialPort.Open();
+                            // Desired serial port opened successfully
+                            return true;
+                        }
+                        else
+                        {
+                            // Desired serial port is busy
+                            return false;
+                        }
+                    }
                 }
-                return true;
+
+                // Desired serial port name is not found
+                return false;
             }
         }
 

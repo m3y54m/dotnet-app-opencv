@@ -1,15 +1,14 @@
-# .NET 5.0 Desktop App for Embedded Developers :)
+# C# App for Embedded Developers :)
 
-An embedded developer friendly project for .NET 5.0 with C# in Linux capable of:
+An embedded developer friendly project for .NET 5.0 with C# in Linux ,capable of:
 
 - Calling an OpenCV-based C++ function in a C# program
-- Communication with a serial port
-
-https://docs.microsoft.com/en-us/dotnet/core/tutorials/with-visual-studio-code
-
-## Commands
+- Communication with a serial port in C#
+## Useful Commands
 
 ### Create the app
+
+https://docs.microsoft.com/en-us/dotnet/core/tutorials/with-visual-studio-code
 
 ```console
 dotnet new console --framework net5.0
@@ -35,7 +34,6 @@ cmake --build sobel_opencv_cpp/build
     ```console
     dotnet add package System.IO.Ports --version 5.0.1
     ```
-
 ### Run the app
 
 ```console
