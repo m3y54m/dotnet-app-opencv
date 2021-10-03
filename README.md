@@ -18,6 +18,20 @@ dotnet new console --framework net5.0
 cmake -S sobel_opencv_cpp/src -B sobel_opencv_cpp/build
 cmake --build sobel_opencv_cpp/build
 ```
+### Install .NET dependencies
+
+-   Add support for Bitmap images
+
+    ```console
+    dotnet add package System.Drawing.Common --version 5.0.2
+    sudo apt install libgdiplus
+    ```
+
+-   Add support for SerialPort communication
+
+    ```console
+    dotnet add package System.IO.Ports --version 5.0.1
+    ```
 
 ### Run the app
 
@@ -25,5 +39,4 @@ cmake --build sobel_opencv_cpp/build
 dotnet run
 ```
 
-dotnet add package System.Drawing.Common --version 5.0.2
-sudo apt install libgdiplus
+
